@@ -298,7 +298,7 @@ export default function DashboardStats() {
                 key={action.id} 
                 className={`action-row ${action.isNew ? 'new-item' : ''}`}
               >
-                <td className="values time-cell">
+                <td className="time-cell">
                   {action.time}
                 </td>
                 <td className="values description-cell">
