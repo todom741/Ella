@@ -5,7 +5,8 @@ import { db } from './firebase';   // Make sure this path is correct
 import '../App.css';
 
 export default function DashboardStats() {
-  const [usdcBalance, setUsdcBalance] = useState<number | null>(null);
+  const [solBalance, setsolBalance] = useState<number | null>(null);
+  const [pooledElla, setPooledElla] = useState<number | null>(null);
   const [openPositions, setOpenPositions] = useState<any[]>([]);
   const [latestActions, setLatestActions] = useState<any[]>([]);
 
@@ -13,7 +14,8 @@ export default function DashboardStats() {
   const [actionsLoading, setActionsLoading] = useState(true);
 
   const [loadingStates, setLoadingStates] = useState({
-    usdc: true,
+    sol: true,
+    pooled: true,
   });
   const [firebaseError, setFirebaseError] = useState<string | null>(null);
 
@@ -29,22 +31,39 @@ export default function DashboardStats() {
   useEffect(() => {
     const unsubscribes: (() => void)[] = [];
 
-    // USDC Balance
-    const balanceRef = ref(db, 'dashboard/usdcBalance');
+    // sol Balance
+    const balanceRef = ref(db, 'dashboard/solBalance');
     const unsubscribeBalance = onValue(
       balanceRef,
       (snapshot) => {
-        setUsdcBalance(snapshot.val());
-        setLoadingStates((prev) => ({ ...prev, usdc: false }));
+        setsolBalance(snapshot.val());
+        setLoadingStates((prev) => ({ ...prev, sol: false }));
         setFirebaseError(null);
       },
       (err) => {
         console.error('Balance error:', err);
         setFirebaseError(err instanceof Error ? err.message : String(err));
-        setLoadingStates((prev) => ({ ...prev, usdc: false }));
+        setLoadingStates((prev) => ({ ...prev, sol: false }));
       }
     );
     unsubscribes.push(unsubscribeBalance);
+
+        // sol Balance
+    const pooledRef = ref(db, 'dashboard/pooledElla');
+    const unsubscribePooledElla = onValue(
+      pooledRef,
+      (snapshot) => {
+        setPooledElla(snapshot.val());
+        setLoadingStates((prev) => ({ ...prev, pooled: false }));
+        setFirebaseError(null);
+      },
+      (err) => {
+        console.error('Balance error:', err);
+        setFirebaseError(err instanceof Error ? err.message : String(err));
+        setLoadingStates((prev) => ({ ...prev, pooled: false }));
+      }
+    );
+    unsubscribes.push(unsubscribePooledElla);
 
     // Open Positions
     const positionsRef = ref(db, 'dashboard/openPositions');
@@ -138,7 +157,7 @@ export default function DashboardStats() {
 
             // Skip internal Firebase keys
             if (['actionsLastHour', 'currentModel', 'lastUpdated', 'openPositions',
-                 'profitLoss', 'usdcBalance'].includes(key)) {
+                 'profitLoss', 'solBalance', 'pooledElla'].includes(key)) {
               return;
             }
 
@@ -184,7 +203,7 @@ export default function DashboardStats() {
     return () => unsubscribes.forEach((unsub) => unsub());
   }, []);
 
-  const isLoading = loadingStates.usdc || positionsLoading || actionsLoading;
+  const isLoading = loadingStates.sol || loadingStates.pooled || positionsLoading || actionsLoading;
 
   if (isLoading) {
     return <div className="pixel-text" style={{ color: '#7F00FF' }}>Loading dashboard...</div>;
@@ -196,17 +215,24 @@ export default function DashboardStats() {
 
   return (
     <div className="pixel-text" style={{ color: '#9e3dff' }}>
-      <h2>ELLA LLM</h2>
+      <h2 style={{fontSize: "45px"}}>ELLA</h2>
       <p><br/></p>
 
-      <p>
-        USDC Balance:{' '}
+      <p style={{fontSize: "20px"}}>
+        Sol Balance:{' '}
         <strong className="values" style={{ fontFamily: "Roboto", color: "white" }}>
-          {usdcBalance !== null ? `$${usdcBalance}` : '—'}
+          {solBalance !== null ? `${solBalance}` : '—'}
         </strong>
       </p>
 
-      <p>
+    <p style={{fontSize: "20px"}}>
+        Pooled ELLA:{' '}
+        <strong className="values" style={{ fontFamily: "Roboto", color: "white" }}>
+          {pooledElla !== null ? `${pooledElla}` : '—'}
+        </strong>
+      </p>
+
+      <p style={{fontSize: "20px"}}>
         Total Profit/Loss:{' '}
         <strong 
           className="values" 
@@ -216,11 +242,9 @@ export default function DashboardStats() {
             fontWeight: 600 
           }}
         >
-          ${totalProfitLoss.toFixed(2)}
+          {totalProfitLoss.toFixed(2)}
         </strong>
       </p>
-
-      <p><br/></p>
 
       {/* Open Positions Table */}
       <table className="dashboard-table">
@@ -273,7 +297,7 @@ export default function DashboardStats() {
                     fontWeight: 600 
                   }}
                 >
-                  ${pos.pl.toFixed(2)}
+                  {pos.pl.toFixed(2)}
                 </td>
               </tr>
             ))
@@ -286,8 +310,6 @@ export default function DashboardStats() {
           )}
         </tbody>
       </table>
-
-      <p><br/></p>
 
       {/* Latest Actions Table - Added class for better targeting */}
       <table className="dashboard-table actions-table">
