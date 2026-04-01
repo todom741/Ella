@@ -233,7 +233,7 @@ export default function DashboardStats() {
       </p>
 
       <p style={{fontSize: "20px"}}>
-        Total Profit/Loss:{' '}
+        SOL Profit/Loss:{' '}
         <strong 
           className="values" 
           style={{ 
